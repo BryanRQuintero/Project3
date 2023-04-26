@@ -270,8 +270,8 @@ int main()
     vitEAvg = 15, vitKAvg = 120, calciumAvg = 1300, phosphAvg = 1250, magAvg = 420, ironAvg = 18, zincAvg = 11, copperAvg = 0.9,
     selenAvg = 55, potAvg = 4700, sodiumAvg = 2300;
     vector<food*> all;
-    data.open("FNDDS Formatted.txt");
-    /**First in main, it will open up the delimited Excel file containing the nutrition values for various food and ingreidents
+    data.open("FNDDS Formatted.txt"); //<-- Make sure its in the same directory as main
+    /**First in main, it will open up the delimited Excel file containing the nutrition values for various food and ingredients
     as by the FNDDS, set up the daily averages as recommended by the FDA for the nutrients available, and create vector
     of food objects for temporary storage. There are 5624 different foods/ingredients, and 27 nutrients that can be compared
     to the recommended average, therefore taking in 151,848 data points.*/
