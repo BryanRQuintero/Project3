@@ -362,7 +362,7 @@ int main()
             auto endT = high_resolution_clock::now();
             auto durationT = duration_cast<milliseconds>(endT - startT);
             /**For each nutrient, it will first sort the row of the table that contains that nutrient, first using Merge
-            Sort, and the using Quick Sort. Both are timed and will be printed out later. The method of timing was obtained
+            Sort, and the using Tim Sort. Both are timed and will be printed out later. The method of timing was obtained
             from GeeksforGeeks, Link: https://www.geeksforgeeks.org/measure-execution-time-function-cpp/*/
             vector<pair<float,string>> toPrint;
             if (value < proteinAvg)
