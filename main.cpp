@@ -110,50 +110,6 @@ food* add(string full)
 /**The add function will go through every row in the Excel sheet and collect only the necessary data, add them to a new
 food object and return it.*/
 
-int partition (vector<pair<float,string>> &toQSort, int low, int high)
-{
-    float pivot = toQSort[low].first;
-    int up = low;
-    int down = high;
-    while(up < down)
-    {
-        for(int i = up; i < high; i++)
-        {
-            if(toQSort[up].first > pivot)
-            {
-                break;
-            }
-            up++;
-        }
-        for(int j = high; j > low; j--)
-        {
-            if(toQSort[down].first < pivot)
-            {
-                break;
-            }
-            down--;
-        }
-        if(up < down)
-        {
-            swap(toQSort[up], toQSort[down]);
-        }
-    }
-    swap(toQSort[low], toQSort[down]);
-    return down;
-}
-//Modified from Partition code on page 122 of "6-sorting" PowerPoint on Canvas to support a vector of pairs.
-
-void quickSort(vector<pair<float, string>> &toQSort, int low, int high)
-{
-    if (low < high)
-    {
-        int pivot = partition(toQSort, low, high);
-        quickSort(toQSort, low, pivot - 1);
-        quickSort(toQSort, pivot + 1, high);
-    }
-}
-//Modified from Quick Sort code on page 122 of "6-Sorting" PowerPoint on Canvas.
-
 void merge(vector<pair<float,string>> &toMSort, int left, int mid, int right)
 {
     int n1 = mid - left + 1;
@@ -211,6 +167,47 @@ void mergeSort(vector<pair<float, string>> &toMSort, int left, int right)
     }
 }
 //Modified from Merge Sort code on page 89 of "6-Sorting" PowerPoint on Canvas.
+
+void insertionSort(vector<pair<float, string>> &toISort, int left, int right)
+{
+    for (int i = left + 1; i < right; i++)
+    {
+        pair<float, string> key = toISort[i];
+        int j = i - 1;
+        while (j > left && toISort[j].first > key.first)
+        {
+            toISort[j+1] = toISort[j];
+            j--;
+        }
+        toISort[j+1] = key;
+    }
+}
+//Modified from Insertion Sort code on page 38 of "6-Sorting" PowerPoint on Canvas.
+
+void timSort(vector<pair<float,string>> &toTSort, int max)
+{
+    int run = 76;
+    for (int i = 0; i < max; i+=run)
+    {
+        insertionSort(toTSort, i, min((i+run-1), max));
+    }
+    for (int size = run; size < max; size = 2 * size)
+    {
+        for (int left = 0; left < max; left += 2 * size)
+        {
+            int mid = left + size - 1;
+            int right = min((left + 2 * size - 1), (max));
+            if (mid < right)
+            {
+                merge(toTSort, left, mid, right);
+            }
+        }
+    }
+}
+/**Idea gotten from Other Sorts slide on page 125 of "6-Sorting" PowerPoint on Canvas. What Tim Sort is and how it works
+was obtained form GeeksforGeeks, and our version was modified from there. In essence, it is a merge sort that uses insertion
+sort on the split sections (arbitrarily chosen at 76, that double in size) to sort them, before merge combines those sections, until the vector is
+eventually sorted. Link: https://www.geeksforgeeks.org/timsort/*/
 
 string parseNutrient(string toParse)
 {
@@ -356,14 +353,14 @@ int main()
         user has formatted their input properly.*/
         if (nutrient == "protein")
         {
-            auto startQ = high_resolution_clock::now();
-            quickSort(table[0], 0, table[0].size() - 1);
-            auto endQ = high_resolution_clock::now();
-            auto durationQ = duration_cast<milliseconds>(endQ - startQ);
             auto startM = high_resolution_clock::now();
             mergeSort(table[0], 0, table[0].size() - 1);
             auto endM = high_resolution_clock::now();
             auto durationM = duration_cast<milliseconds>(endM - startM);
+            auto startT = high_resolution_clock::now();
+            timSort(table[0], table[0].size() - 1);
+            auto endT = high_resolution_clock::now();
+            auto durationT = duration_cast<milliseconds>(endT - startT);
             /**For each nutrient, it will first sort the row of the table that contains that nutrient, first using Merge
             Sort, and the using Quick Sort. Both are timed and will be printed out later. The method of timing was obtained
             from GeeksforGeeks, Link: https://www.geeksforgeeks.org/measure-execution-time-function-cpp/*/
@@ -376,8 +373,8 @@ int main()
                 {
                     cout << toPrint[a].second << ": " << toPrint[a].first << endl;
                 }
-                cout << "Time taken to sort results using Quick Sort (in milliseconds) " << durationQ.count() << endl;
                 cout << "Time taken to sort results using Merge Sort (in milliseconds) " << durationM.count() << endl;
+                cout << "Time taken to sort results using Tim Sort (in milliseconds) " << durationT.count() << endl;
                 /**If the value is lower than the recommended average, then it will call cycle to return the highest values
                 still under the average AND the value they of what they already consume on a daily basis, for the top 5
                 to be printed out. The time it took for each sort is then printed at the end as well.*/
@@ -390,8 +387,8 @@ int main()
                 {
                     cout << toPrint[a].second << ": " << toPrint[a].first << endl;
                 }
-                cout << "Time taken to sort results using Quick Sort (in milliseconds) " << durationQ.count() << endl;
                 cout << "Time taken to sort results using Merge Sort (in milliseconds) " << durationM.count() << endl;
+                cout << "Time taken to sort results using Tim Sort (in milliseconds) " << durationT.count() << endl;
                 /**If the value is lower than the recommended average, then it will call cycle to return the lowest 5 values
                 to be printed out. The time it took for each sort is then printed at the end as well.*/
             }
@@ -405,14 +402,14 @@ int main()
         }
         else if (nutrient == "carbs")
         {
-            auto startQ = high_resolution_clock::now();
-            quickSort(table[1], 0, table[1].size() - 1);
-            auto endQ = high_resolution_clock::now();
-            auto durationQ = duration_cast<milliseconds>(endQ - startQ);
             auto startM = high_resolution_clock::now();
             mergeSort(table[1], 0, table[1].size() - 1);
             auto endM = high_resolution_clock::now();
             auto durationM = duration_cast<milliseconds>(endM - startM);
+            auto startT = high_resolution_clock::now();
+            timSort(table[1], table[1].size() - 1);
+            auto endT = high_resolution_clock::now();
+            auto durationT = duration_cast<milliseconds>(endT - startT);
             vector<pair<float,string>> toPrint;
             if (value < carbAvg)
             {
@@ -422,8 +419,8 @@ int main()
                 {
                     cout << toPrint[a].second << ": " << toPrint[a].first << endl;
                 }
-                cout << "Time taken to sort results using Quick Sort (in milliseconds) " << durationQ.count() << endl;
                 cout << "Time taken to sort results using Merge Sort (in milliseconds) " << durationM.count() << endl;
+                cout << "Time taken to sort results using Tim Sort (in milliseconds) " << durationT.count() << endl;
             }
             else if(value > carbAvg)
             {
@@ -433,8 +430,8 @@ int main()
                 {
                     cout << toPrint[a].second << ": " << toPrint[a].first << endl;
                 }
-                cout << "Time taken to sort results using Quick Sort (in milliseconds) " << durationQ.count() << endl;
                 cout << "Time taken to sort results using Merge Sort (in milliseconds) " << durationM.count() << endl;
+                cout << "Time taken to sort results using Tim Sort (in milliseconds) " << durationT.count() << endl;
             }
             else if (value == carbAvg)
             {
@@ -443,14 +440,14 @@ int main()
         }
         else if (nutrient == "sugar")
         {
-            auto startQ = high_resolution_clock::now();
-            quickSort(table[2], 0, table[2].size() - 1);
-            auto endQ = high_resolution_clock::now();
-            auto durationQ = duration_cast<milliseconds>(endQ - startQ);
             auto startM = high_resolution_clock::now();
             mergeSort(table[2], 0, table[2].size() - 1);
             auto endM = high_resolution_clock::now();
             auto durationM = duration_cast<milliseconds>(endM - startM);
+            auto startT = high_resolution_clock::now();
+            timSort(table[2], table[2].size() - 1);
+            auto endT = high_resolution_clock::now();
+            auto durationT = duration_cast<milliseconds>(endT - startT);
             vector<pair<float,string>> toPrint;
             if (value < sugarAvg)
             {
@@ -460,8 +457,8 @@ int main()
                 {
                     cout << toPrint[a].second << ": " << toPrint[a].first << endl;
                 }
-                cout << "Time taken to sort results using Quick Sort (in milliseconds) " << durationQ.count() << endl;
                 cout << "Time taken to sort results using Merge Sort (in milliseconds) " << durationM.count() << endl;
+                cout << "Time taken to sort results using Tim Sort (in milliseconds) " << durationT.count() << endl;
             }
             else if(value > sugarAvg)
             {
@@ -471,8 +468,8 @@ int main()
                 {
                     cout << toPrint[a].second << ": " << toPrint[a].first << endl;
                 }
-                cout << "Time taken to sort results using Quick Sort (in milliseconds) " << durationQ.count() << endl;
                 cout << "Time taken to sort results using Merge Sort (in milliseconds) " << durationM.count() << endl;
+                cout << "Time taken to sort results using Tim Sort (in milliseconds) " << durationT.count() << endl;
             }
             else if (value == sugarAvg)
             {
@@ -481,14 +478,14 @@ int main()
         }
         else if (nutrient == "fiber")
         {
-            auto startQ = high_resolution_clock::now();
-            quickSort(table[3], 0, table[3].size() - 1);
-            auto endQ = high_resolution_clock::now();
-            auto durationQ = duration_cast<milliseconds>(endQ - startQ);
             auto startM = high_resolution_clock::now();
             mergeSort(table[3], 0, table[3].size() - 1);
             auto endM = high_resolution_clock::now();
             auto durationM = duration_cast<milliseconds>(endM - startM);
+            auto startT = high_resolution_clock::now();
+            timSort(table[3], table[3].size() - 1);
+            auto endT = high_resolution_clock::now();
+            auto durationT = duration_cast<milliseconds>(endT - startT);
             vector<pair<float,string>> toPrint;
             if (value < fiberAvg)
             {
@@ -498,8 +495,8 @@ int main()
                 {
                     cout << toPrint[a].second << ": " << toPrint[a].first << endl;
                 }
-                cout << "Time taken to sort results using Quick Sort (in milliseconds) " << durationQ.count() << endl;
                 cout << "Time taken to sort results using Merge Sort (in milliseconds) " << durationM.count() << endl;
+                cout << "Time taken to sort results using Tim Sort (in milliseconds) " << durationT.count() << endl;
             }
             else if(value > fiberAvg)
             {
@@ -509,8 +506,8 @@ int main()
                 {
                     cout << toPrint[a].second << ": " << toPrint[a].first << endl;
                 }
-                cout << "Time taken to sort results using Quick Sort (in milliseconds) " << durationQ.count() << endl;
                 cout << "Time taken to sort results using Merge Sort (in milliseconds) " << durationM.count() << endl;
+                cout << "Time taken to sort results using Tim Sort (in milliseconds) " << durationT.count() << endl;
             }
             else if (value == fiberAvg)
             {
@@ -519,14 +516,14 @@ int main()
         }
         else if (nutrient == "fat")
         {
-            auto startQ = high_resolution_clock::now();
-            quickSort(table[4], 0, table[4].size() - 1);
-            auto endQ = high_resolution_clock::now();
-            auto durationQ = duration_cast<milliseconds>(endQ - startQ);
             auto startM = high_resolution_clock::now();
             mergeSort(table[4], 0, table[4].size() - 1);
             auto endM = high_resolution_clock::now();
             auto durationM = duration_cast<milliseconds>(endM - startM);
+            auto startT = high_resolution_clock::now();
+            timSort(table[4], table[4].size() - 1);
+            auto endT = high_resolution_clock::now();
+            auto durationT = duration_cast<milliseconds>(endT - startT);
             vector<pair<float,string>> toPrint;
             if (value < fatAvg)
             {
@@ -536,8 +533,8 @@ int main()
                 {
                     cout << toPrint[a].second << ": " << toPrint[a].first << endl;
                 }
-                cout << "Time taken to sort results using Quick Sort (in milliseconds) " << durationQ.count() << endl;
                 cout << "Time taken to sort results using Merge Sort (in milliseconds) " << durationM.count() << endl;
+                cout << "Time taken to sort results using Tim Sort (in milliseconds) " << durationT.count() << endl;
             }
             else if(value > fatAvg)
             {
@@ -547,8 +544,8 @@ int main()
                 {
                     cout << toPrint[a].second << ": " << toPrint[a].first << endl;
                 }
-                cout << "Time taken to sort results using Quick Sort (in milliseconds) " << durationQ.count() << endl;
                 cout << "Time taken to sort results using Merge Sort (in milliseconds) " << durationM.count() << endl;
+                cout << "Time taken to sort results using Tim Sort (in milliseconds) " << durationT.count() << endl;
             }
             else if (value == fatAvg)
             {
@@ -557,14 +554,14 @@ int main()
         }
         else if (nutrient == "cholesterol")
         {
-            auto startQ = high_resolution_clock::now();
-            quickSort(table[5], 0, table[5].size() - 1);
-            auto endQ = high_resolution_clock::now();
-            auto durationQ = duration_cast<milliseconds>(endQ - startQ);
             auto startM = high_resolution_clock::now();
             mergeSort(table[5], 0, table[5].size() - 1);
             auto endM = high_resolution_clock::now();
             auto durationM = duration_cast<milliseconds>(endM - startM);
+            auto startT = high_resolution_clock::now();
+            timSort(table[5], table[5].size() - 1);
+            auto endT = high_resolution_clock::now();
+            auto durationT = duration_cast<milliseconds>(endT - startT);
             vector<pair<float,string>> toPrint;
             if (value < cholestAvg)
             {
@@ -574,8 +571,8 @@ int main()
                 {
                     cout << toPrint[a].second << ": " << toPrint[a].first << endl;
                 }
-                cout << "Time taken to sort results using Quick Sort (in milliseconds) " << durationQ.count() << endl;
                 cout << "Time taken to sort results using Merge Sort (in milliseconds) " << durationM.count() << endl;
+                cout << "Time taken to sort results using Tim Sort (in milliseconds) " << durationT.count() << endl;
             }
             else if(value > cholestAvg)
             {
@@ -585,8 +582,8 @@ int main()
                 {
                     cout << toPrint[a].second << ": " << toPrint[a].first << endl;
                 }
-                cout << "Time taken to sort results using Quick Sort (in milliseconds) " << durationQ.count() << endl;
                 cout << "Time taken to sort results using Merge Sort (in milliseconds) " << durationM.count() << endl;
+                cout << "Time taken to sort results using Tim Sort (in milliseconds) " << durationT.count() << endl;
             }
             else if (value == cholestAvg)
             {
@@ -595,14 +592,14 @@ int main()
         }
         else if (nutrient == "vitA")
         {
-            auto startQ = high_resolution_clock::now();
-            quickSort(table[6], 0, table[6].size() - 1);
-            auto endQ = high_resolution_clock::now();
-            auto durationQ = duration_cast<milliseconds>(endQ - startQ);
             auto startM = high_resolution_clock::now();
             mergeSort(table[6], 0, table[6].size() - 1);
             auto endM = high_resolution_clock::now();
             auto durationM = duration_cast<milliseconds>(endM - startM);
+            auto startT = high_resolution_clock::now();
+            timSort(table[6], table[6].size() - 1);
+            auto endT = high_resolution_clock::now();
+            auto durationT = duration_cast<milliseconds>(endT - startT);
             vector<pair<float,string>> toPrint;
             if (value < vitAAvg)
             {
@@ -612,8 +609,8 @@ int main()
                 {
                     cout << toPrint[a].second << ": " << toPrint[a].first << endl;
                 }
-                cout << "Time taken to sort results using Quick Sort (in milliseconds) " << durationQ.count() << endl;
                 cout << "Time taken to sort results using Merge Sort (in milliseconds) " << durationM.count() << endl;
+                cout << "Time taken to sort results using Tim Sort (in milliseconds) " << durationT.count() << endl;
             }
             else if(value > vitAAvg)
             {
@@ -623,8 +620,8 @@ int main()
                 {
                     cout << toPrint[a].second << ": " << toPrint[a].first << endl;
                 }
-                cout << "Time taken to sort results using Quick Sort (in milliseconds) " << durationQ.count() << endl;
                 cout << "Time taken to sort results using Merge Sort (in milliseconds) " << durationM.count() << endl;
+                cout << "Time taken to sort results using Tim Sort (in milliseconds) " << durationT.count() << endl;
             }
             else if (value == vitAAvg)
             {
@@ -633,14 +630,14 @@ int main()
         }
         else if (nutrient == "thiamin")
         {
-            auto startQ = high_resolution_clock::now();
-            quickSort(table[7], 0, table[7].size() - 1);
-            auto endQ = high_resolution_clock::now();
-            auto durationQ = duration_cast<milliseconds>(endQ - startQ);
             auto startM = high_resolution_clock::now();
             mergeSort(table[7], 0, table[7].size() - 1);
             auto endM = high_resolution_clock::now();
             auto durationM = duration_cast<milliseconds>(endM - startM);
+            auto startT = high_resolution_clock::now();
+            timSort(table[7], table[7].size() - 1);
+            auto endT = high_resolution_clock::now();
+            auto durationT = duration_cast<milliseconds>(endT - startT);
             vector<pair<float,string>> toPrint;
             if (value < thiaminAvg)
             {
@@ -650,8 +647,8 @@ int main()
                 {
                     cout << toPrint[a].second << ": " << toPrint[a].first << endl;
                 }
-                cout << "Time taken to sort results using Quick Sort (in milliseconds) " << durationQ.count() << endl;
                 cout << "Time taken to sort results using Merge Sort (in milliseconds) " << durationM.count() << endl;
+                cout << "Time taken to sort results using Tim Sort (in milliseconds) " << durationT.count() << endl;
             }
             else if(value > thiaminAvg)
             {
@@ -661,8 +658,8 @@ int main()
                 {
                     cout << toPrint[a].second << ": " << toPrint[a].first << endl;
                 }
-                cout << "Time taken to sort results using Quick Sort (in milliseconds) " << durationQ.count() << endl;
                 cout << "Time taken to sort results using Merge Sort (in milliseconds) " << durationM.count() << endl;
+                cout << "Time taken to sort results using Tim Sort (in milliseconds) " << durationT.count() << endl;
             }
             else if (value == thiaminAvg)
             {
@@ -671,14 +668,14 @@ int main()
         }
         else if (nutrient == "riboflavin")
         {
-            auto startQ = high_resolution_clock::now();
-            quickSort(table[8], 0, table[8].size() - 1);
-            auto endQ = high_resolution_clock::now();
-            auto durationQ = duration_cast<milliseconds>(endQ - startQ);
             auto startM = high_resolution_clock::now();
             mergeSort(table[8], 0, table[8].size() - 1);
             auto endM = high_resolution_clock::now();
             auto durationM = duration_cast<milliseconds>(endM - startM);
+            auto startT = high_resolution_clock::now();
+            timSort(table[8], table[8].size() - 1);
+            auto endT = high_resolution_clock::now();
+            auto durationT = duration_cast<milliseconds>(endT - startT);
             vector<pair<float,string>> toPrint;
             if (value < riboAvg)
             {
@@ -688,8 +685,8 @@ int main()
                 {
                     cout << toPrint[a].second << ": " << toPrint[a].first << endl;
                 }
-                cout << "Time taken to sort results using Quick Sort (in milliseconds) " << durationQ.count() << endl;
                 cout << "Time taken to sort results using Merge Sort (in milliseconds) " << durationM.count() << endl;
+                cout << "Time taken to sort results using Tim Sort (in milliseconds) " << durationT.count() << endl;
             }
             else if(value > riboAvg)
             {
@@ -699,8 +696,8 @@ int main()
                 {
                     cout << toPrint[a].second << ": " << toPrint[a].first << endl;
                 }
-                cout << "Time taken to sort results using Quick Sort (in milliseconds) " << durationQ.count() << endl;
                 cout << "Time taken to sort results using Merge Sort (in milliseconds) " << durationM.count() << endl;
+                cout << "Time taken to sort results using Tim Sort (in milliseconds) " << durationT.count() << endl;
             }
             else if (value == riboAvg)
             {
@@ -709,14 +706,14 @@ int main()
         }
         else if (nutrient == "niacin")
         {
-            auto startQ = high_resolution_clock::now();
-            quickSort(table[9], 0, table[9].size() - 1);
-            auto endQ = high_resolution_clock::now();
-            auto durationQ = duration_cast<milliseconds>(endQ - startQ);
             auto startM = high_resolution_clock::now();
             mergeSort(table[9], 0, table[9].size() - 1);
             auto endM = high_resolution_clock::now();
             auto durationM = duration_cast<milliseconds>(endM - startM);
+            auto startT = high_resolution_clock::now();
+            timSort(table[9], table[9].size() - 1);
+            auto endT = high_resolution_clock::now();
+            auto durationT = duration_cast<milliseconds>(endT - startT);
             vector<pair<float,string>> toPrint;
             if (value < niacinAvg)
             {
@@ -726,8 +723,8 @@ int main()
                 {
                     cout << toPrint[a].second << ": " << toPrint[a].first << endl;
                 }
-                cout << "Time taken to sort results using Quick Sort (in milliseconds) " << durationQ.count() << endl;
                 cout << "Time taken to sort results using Merge Sort (in milliseconds) " << durationM.count() << endl;
+                cout << "Time taken to sort results using Tim Sort (in milliseconds) " << durationT.count() << endl;
             }
             else if(value > niacinAvg)
             {
@@ -737,8 +734,8 @@ int main()
                 {
                     cout << toPrint[a].second << ": " << toPrint[a].first << endl;
                 }
-                cout << "Time taken to sort results using Quick Sort (in milliseconds) " << durationQ.count() << endl;
                 cout << "Time taken to sort results using Merge Sort (in milliseconds) " << durationM.count() << endl;
+                cout << "Time taken to sort results using Tim Sort (in milliseconds) " << durationT.count() << endl;
             }
             else if (value == niacinAvg)
             {
@@ -747,14 +744,14 @@ int main()
         }
         else if (nutrient == "vitB6")
         {
-            auto startQ = high_resolution_clock::now();
-            quickSort(table[10], 0, table[10].size() - 1);
-            auto endQ = high_resolution_clock::now();
-            auto durationQ = duration_cast<milliseconds>(endQ - startQ);
             auto startM = high_resolution_clock::now();
             mergeSort(table[10], 0, table[10].size() - 1);
             auto endM = high_resolution_clock::now();
             auto durationM = duration_cast<milliseconds>(endM - startM);
+            auto startT = high_resolution_clock::now();
+            timSort(table[10], table[10].size() - 1);
+            auto endT = high_resolution_clock::now();
+            auto durationT = duration_cast<milliseconds>(endT - startT);
             vector<pair<float,string>> toPrint;
             if (value < vitB6Avg)
             {
@@ -764,8 +761,8 @@ int main()
                 {
                     cout << toPrint[a].second << ": " << toPrint[a].first << endl;
                 }
-                cout << "Time taken to sort results using Quick Sort (in milliseconds) " << durationQ.count() << endl;
                 cout << "Time taken to sort results using Merge Sort (in milliseconds) " << durationM.count() << endl;
+                cout << "Time taken to sort results using Tim Sort (in milliseconds) " << durationT.count() << endl;
             }
             else if(value > vitB6Avg)
             {
@@ -775,8 +772,8 @@ int main()
                 {
                     cout << toPrint[a].second << ": " << toPrint[a].first << endl;
                 }
-                cout << "Time taken to sort results using Quick Sort (in milliseconds) " << durationQ.count() << endl;
                 cout << "Time taken to sort results using Merge Sort (in milliseconds) " << durationM.count() << endl;
+                cout << "Time taken to sort results using Tim Sort (in milliseconds) " << durationT.count() << endl;
             }
             else if (value == vitB6Avg)
             {
@@ -785,14 +782,14 @@ int main()
         }
         else if (nutrient == "folate")
         {
-            auto startQ = high_resolution_clock::now();
-            quickSort(table[11], 0, table[11].size() - 1);
-            auto endQ = high_resolution_clock::now();
-            auto durationQ = duration_cast<milliseconds>(endQ - startQ);
             auto startM = high_resolution_clock::now();
             mergeSort(table[11], 0, table[11].size() - 1);
             auto endM = high_resolution_clock::now();
             auto durationM = duration_cast<milliseconds>(endM - startM);
+            auto startT = high_resolution_clock::now();
+            timSort(table[11], table[11].size() - 1);
+            auto endT = high_resolution_clock::now();
+            auto durationT = duration_cast<milliseconds>(endT - startT);
             vector<pair<float,string>> toPrint;
             if (value < folateAvg)
             {
@@ -802,8 +799,8 @@ int main()
                 {
                     cout << toPrint[a].second << ": " << toPrint[a].first << endl;
                 }
-                cout << "Time taken to sort results using Quick Sort (in milliseconds) " << durationQ.count() << endl;
                 cout << "Time taken to sort results using Merge Sort (in milliseconds) " << durationM.count() << endl;
+                cout << "Time taken to sort results using Tim Sort (in milliseconds) " << durationT.count() << endl;
             }
             else if(value > folateAvg)
             {
@@ -813,8 +810,8 @@ int main()
                 {
                     cout << toPrint[a].second << ": " << toPrint[a].first << endl;
                 }
-                cout << "Time taken to sort results using Quick Sort (in milliseconds) " << durationQ.count() << endl;
                 cout << "Time taken to sort results using Merge Sort (in milliseconds) " << durationM.count() << endl;
+                cout << "Time taken to sort results using Tim Sort (in milliseconds) " << durationT.count() << endl;
             }
             else if (value == folateAvg)
             {
@@ -823,14 +820,14 @@ int main()
         }
         else if (nutrient == "choline")
         {
-            auto startQ = high_resolution_clock::now();
-            quickSort(table[12], 0, table[12].size() - 1);
-            auto endQ = high_resolution_clock::now();
-            auto durationQ = duration_cast<milliseconds>(endQ - startQ);
             auto startM = high_resolution_clock::now();
             mergeSort(table[12], 0, table[12].size() - 1);
             auto endM = high_resolution_clock::now();
             auto durationM = duration_cast<milliseconds>(endM - startM);
+            auto startT = high_resolution_clock::now();
+            timSort(table[12], table[12].size() - 1);
+            auto endT = high_resolution_clock::now();
+            auto durationT = duration_cast<milliseconds>(endT - startT);
             vector<pair<float,string>> toPrint;
             if (value < cholineAvg)
             {
@@ -840,8 +837,8 @@ int main()
                 {
                     cout << toPrint[a].second << ": " << toPrint[a].first << endl;
                 }
-                cout << "Time taken to sort results using Quick Sort (in milliseconds) " << durationQ.count() << endl;
                 cout << "Time taken to sort results using Merge Sort (in milliseconds) " << durationM.count() << endl;
+                cout << "Time taken to sort results using Tim Sort (in milliseconds) " << durationT.count() << endl;
             }
             else if(value > cholineAvg)
             {
@@ -851,8 +848,8 @@ int main()
                 {
                     cout << toPrint[a].second << ": " << toPrint[a].first << endl;
                 }
-                cout << "Time taken to sort results using Quick Sort (in milliseconds) " << durationQ.count() << endl;
                 cout << "Time taken to sort results using Merge Sort (in milliseconds) " << durationM.count() << endl;
+                cout << "Time taken to sort results using Tim Sort (in milliseconds) " << durationT.count() << endl;
             }
             else if (value == cholineAvg)
             {
@@ -861,14 +858,14 @@ int main()
         }
         else if (nutrient == "vitB12")
         {
-            auto startQ = high_resolution_clock::now();
-            quickSort(table[13], 0, table[13].size() - 1);
-            auto endQ = high_resolution_clock::now();
-            auto durationQ = duration_cast<milliseconds>(endQ - startQ);
             auto startM = high_resolution_clock::now();
             mergeSort(table[13], 0, table[13].size() - 1);
             auto endM = high_resolution_clock::now();
             auto durationM = duration_cast<milliseconds>(endM - startM);
+            auto startT = high_resolution_clock::now();
+            timSort(table[13], table[13].size() - 1);
+            auto endT = high_resolution_clock::now();
+            auto durationT = duration_cast<milliseconds>(endT - startT);
             vector<pair<float,string>> toPrint;
             if (value < vitB12Avg)
             {
@@ -878,8 +875,8 @@ int main()
                 {
                     cout << toPrint[a].second << ": " << toPrint[a].first << endl;
                 }
-                cout << "Time taken to sort results using Quick Sort (in milliseconds) " << durationQ.count() << endl;
                 cout << "Time taken to sort results using Merge Sort (in milliseconds) " << durationM.count() << endl;
+                cout << "Time taken to sort results using Tim Sort (in milliseconds) " << durationT.count() << endl;
             }
             else if(value > vitB12Avg)
             {
@@ -889,8 +886,8 @@ int main()
                 {
                     cout << toPrint[a].second << ": " << toPrint[a].first << endl;
                 }
-                cout << "Time taken to sort results using Quick Sort (in milliseconds) " << durationQ.count() << endl;
                 cout << "Time taken to sort results using Merge Sort (in milliseconds) " << durationM.count() << endl;
+                cout << "Time taken to sort results using Tim Sort (in milliseconds) " << durationT.count() << endl;
             }
             else if (value == vitB12Avg)
             {
@@ -899,14 +896,14 @@ int main()
         }
         else if (nutrient == "vitC")
         {
-            auto startQ = high_resolution_clock::now();
-            quickSort(table[14], 0, table[14].size() - 1);
-            auto endQ = high_resolution_clock::now();
-            auto durationQ = duration_cast<milliseconds>(endQ - startQ);
             auto startM = high_resolution_clock::now();
             mergeSort(table[14], 0, table[14].size() - 1);
             auto endM = high_resolution_clock::now();
             auto durationM = duration_cast<milliseconds>(endM - startM);
+            auto startT = high_resolution_clock::now();
+            timSort(table[14], table[14].size() - 1);
+            auto endT = high_resolution_clock::now();
+            auto durationT = duration_cast<milliseconds>(endT - startT);
             vector<pair<float,string>> toPrint;
             if (value < vitCAvg)
             {
@@ -916,8 +913,8 @@ int main()
                 {
                     cout << toPrint[a].second << ": " << toPrint[a].first << endl;
                 }
-                cout << "Time taken to sort results using Quick Sort (in milliseconds) " << durationQ.count() << endl;
                 cout << "Time taken to sort results using Merge Sort (in milliseconds) " << durationM.count() << endl;
+                cout << "Time taken to sort results using Tim Sort (in milliseconds) " << durationT.count() << endl;
             }
             else if(value > vitCAvg)
             {
@@ -927,8 +924,8 @@ int main()
                 {
                     cout << toPrint[a].second << ": " << toPrint[a].first << endl;
                 }
-                cout << "Time taken to sort results using Quick Sort (in milliseconds) " << durationQ.count() << endl;
                 cout << "Time taken to sort results using Merge Sort (in milliseconds) " << durationM.count() << endl;
+                cout << "Time taken to sort results using Tim Sort (in milliseconds) " << durationT.count() << endl;
             }
             else if (value == vitCAvg)
             {
@@ -937,14 +934,14 @@ int main()
         }
         else if (nutrient == "vitD")
         {
-            auto startQ = high_resolution_clock::now();
-            quickSort(table[15], 0, table[15].size() - 1);
-            auto endQ = high_resolution_clock::now();
-            auto durationQ = duration_cast<milliseconds>(endQ - startQ);
             auto startM = high_resolution_clock::now();
             mergeSort(table[15], 0, table[15].size() - 1);
             auto endM = high_resolution_clock::now();
             auto durationM = duration_cast<milliseconds>(endM - startM);
+            auto startT = high_resolution_clock::now();
+            timSort(table[15], table[15].size() - 1);
+            auto endT = high_resolution_clock::now();
+            auto durationT = duration_cast<milliseconds>(endT - startT);
             vector<pair<float,string>> toPrint;
             if (value < vitDAvg)
             {
@@ -954,8 +951,8 @@ int main()
                 {
                     cout << toPrint[a].second << ": " << toPrint[a].first << endl;
                 }
-                cout << "Time taken to sort results using Quick Sort (in milliseconds) " << durationQ.count() << endl;
                 cout << "Time taken to sort results using Merge Sort (in milliseconds) " << durationM.count() << endl;
+                cout << "Time taken to sort results using Tim Sort (in milliseconds) " << durationT.count() << endl;
             }
             else if(value > vitDAvg)
             {
@@ -965,8 +962,8 @@ int main()
                 {
                     cout << toPrint[a].second << ": " << toPrint[a].first << endl;
                 }
-                cout << "Time taken to sort results using Quick Sort (in milliseconds) " << durationQ.count() << endl;
                 cout << "Time taken to sort results using Merge Sort (in milliseconds) " << durationM.count() << endl;
+                cout << "Time taken to sort results using Tim Sort (in milliseconds) " << durationT.count() << endl;
             }
             else if (value == vitDAvg)
             {
@@ -975,14 +972,14 @@ int main()
         }
         else if (nutrient == "vitE")
         {
-            auto startQ = high_resolution_clock::now();
-            quickSort(table[16], 0, table[16].size() - 1);
-            auto endQ = high_resolution_clock::now();
-            auto durationQ = duration_cast<milliseconds>(endQ - startQ);
             auto startM = high_resolution_clock::now();
             mergeSort(table[16], 0, table[16].size() - 1);
             auto endM = high_resolution_clock::now();
             auto durationM = duration_cast<milliseconds>(endM - startM);
+            auto startT = high_resolution_clock::now();
+            timSort(table[16], table[16].size() - 1);
+            auto endT = high_resolution_clock::now();
+            auto durationT = duration_cast<milliseconds>(endT - startT);
             vector<pair<float,string>> toPrint;
             if (value < vitEAvg)
             {
@@ -992,8 +989,8 @@ int main()
                 {
                     cout << toPrint[a].second << ": " << toPrint[a].first << endl;
                 }
-                cout << "Time taken to sort results using Quick Sort (in milliseconds) " << durationQ.count() << endl;
                 cout << "Time taken to sort results using Merge Sort (in milliseconds) " << durationM.count() << endl;
+                cout << "Time taken to sort results using Tim Sort (in milliseconds) " << durationT.count() << endl;
             }
             else if(value > vitEAvg)
             {
@@ -1003,8 +1000,8 @@ int main()
                 {
                     cout << toPrint[a].second << ": " << toPrint[a].first << endl;
                 }
-                cout << "Time taken to sort results using Quick Sort (in milliseconds) " << durationQ.count() << endl;
                 cout << "Time taken to sort results using Merge Sort (in milliseconds) " << durationM.count() << endl;
+                cout << "Time taken to sort results using Tim Sort (in milliseconds) " << durationT.count() << endl;
             }
             else if (value == vitEAvg)
             {
@@ -1013,14 +1010,14 @@ int main()
         }
         else if (nutrient == "vitK")
         {
-            auto startQ = high_resolution_clock::now();
-            quickSort(table[17], 0, table[17].size() - 1);
-            auto endQ = high_resolution_clock::now();
-            auto durationQ = duration_cast<milliseconds>(endQ - startQ);
             auto startM = high_resolution_clock::now();
             mergeSort(table[17], 0, table[17].size() - 1);
             auto endM = high_resolution_clock::now();
             auto durationM = duration_cast<milliseconds>(endM - startM);
+            auto startT = high_resolution_clock::now();
+            timSort(table[17], table[17].size() - 1);
+            auto endT = high_resolution_clock::now();
+            auto durationT = duration_cast<milliseconds>(endT - startT);
             vector<pair<float,string>> toPrint;
             if (value < vitKAvg)
             {
@@ -1030,8 +1027,8 @@ int main()
                 {
                     cout << toPrint[a].second << ": " << toPrint[a].first << endl;
                 }
-                cout << "Time taken to sort results using Quick Sort (in milliseconds) " << durationQ.count() << endl;
                 cout << "Time taken to sort results using Merge Sort (in milliseconds) " << durationM.count() << endl;
+                cout << "Time taken to sort results using Tim Sort (in milliseconds) " << durationT.count() << endl;
             }
             else if(value > vitKAvg)
             {
@@ -1041,8 +1038,8 @@ int main()
                 {
                     cout << toPrint[a].second << ": " << toPrint[a].first << endl;
                 }
-                cout << "Time taken to sort results using Quick Sort (in milliseconds) " << durationQ.count() << endl;
                 cout << "Time taken to sort results using Merge Sort (in milliseconds) " << durationM.count() << endl;
+                cout << "Time taken to sort results using Tim Sort (in milliseconds) " << durationT.count() << endl;
             }
             else if (value == vitKAvg)
             {
@@ -1051,14 +1048,14 @@ int main()
         }
         else if (nutrient == "calcium")
         {
-            auto startQ = high_resolution_clock::now();
-            quickSort(table[18], 0, table[18].size() - 1);
-            auto endQ = high_resolution_clock::now();
-            auto durationQ = duration_cast<milliseconds>(endQ - startQ);
             auto startM = high_resolution_clock::now();
             mergeSort(table[18], 0, table[18].size() - 1);
             auto endM = high_resolution_clock::now();
             auto durationM = duration_cast<milliseconds>(endM - startM);
+            auto startT = high_resolution_clock::now();
+            timSort(table[18], table[18].size() - 1);
+            auto endT = high_resolution_clock::now();
+            auto durationT = duration_cast<milliseconds>(endT - startT);
             vector<pair<float,string>> toPrint;
             if (value < calciumAvg)
             {
@@ -1068,8 +1065,8 @@ int main()
                 {
                     cout << toPrint[a].second << ": " << toPrint[a].first << endl;
                 }
-                cout << "Time taken to sort results using Quick Sort (in milliseconds) " << durationQ.count() << endl;
                 cout << "Time taken to sort results using Merge Sort (in milliseconds) " << durationM.count() << endl;
+                cout << "Time taken to sort results using Tim Sort (in milliseconds) " << durationT.count() << endl;
             }
             else if(value > calciumAvg)
             {
@@ -1079,8 +1076,8 @@ int main()
                 {
                     cout << toPrint[a].second << ": " << toPrint[a].first << endl;
                 }
-                cout << "Time taken to sort results using Quick Sort (in milliseconds) " << durationQ.count() << endl;
                 cout << "Time taken to sort results using Merge Sort (in milliseconds) " << durationM.count() << endl;
+                cout << "Time taken to sort results using Tim Sort (in milliseconds) " << durationT.count() << endl;
             }
             else if (value == calciumAvg)
             {
@@ -1089,14 +1086,14 @@ int main()
         }
         else if (nutrient == "phosphorus")
         {
-            auto startQ = high_resolution_clock::now();
-            quickSort(table[19], 0, table[19].size() - 1);
-            auto endQ = high_resolution_clock::now();
-            auto durationQ = duration_cast<milliseconds>(endQ - startQ);
             auto startM = high_resolution_clock::now();
             mergeSort(table[19], 0, table[19].size() - 1);
             auto endM = high_resolution_clock::now();
             auto durationM = duration_cast<milliseconds>(endM - startM);
+            auto startT = high_resolution_clock::now();
+            timSort(table[19], table[19].size() - 1);
+            auto endT = high_resolution_clock::now();
+            auto durationT = duration_cast<milliseconds>(endT - startT);
             vector<pair<float,string>> toPrint;
             if (value < phosphAvg)
             {
@@ -1106,8 +1103,8 @@ int main()
                 {
                     cout << toPrint[a].second << ": " << toPrint[a].first << endl;
                 }
-                cout << "Time taken to sort results using Quick Sort (in milliseconds) " << durationQ.count() << endl;
                 cout << "Time taken to sort results using Merge Sort (in milliseconds) " << durationM.count() << endl;
+                cout << "Time taken to sort results using Tim Sort (in milliseconds) " << durationT.count() << endl;
             }
             else if(value > phosphAvg)
             {
@@ -1117,8 +1114,8 @@ int main()
                 {
                     cout << toPrint[a].second << ": " << toPrint[a].first << endl;
                 }
-                cout << "Time taken to sort results using Quick Sort (in milliseconds) " << durationQ.count() << endl;
                 cout << "Time taken to sort results using Merge Sort (in milliseconds) " << durationM.count() << endl;
+                cout << "Time taken to sort results using Tim Sort (in milliseconds) " << durationT.count() << endl;
             }
             else if (value == phosphAvg)
             {
@@ -1127,14 +1124,14 @@ int main()
         }
         else if (nutrient == "magnesium")
         {
-            auto startQ = high_resolution_clock::now();
-            quickSort(table[20], 0, table[20].size() - 1);
-            auto endQ = high_resolution_clock::now();
-            auto durationQ = duration_cast<milliseconds>(endQ - startQ);
             auto startM = high_resolution_clock::now();
             mergeSort(table[20], 0, table[20].size() - 1);
             auto endM = high_resolution_clock::now();
             auto durationM = duration_cast<milliseconds>(endM - startM);
+            auto startT = high_resolution_clock::now();
+            timSort(table[20], table[20].size() - 1);
+            auto endT = high_resolution_clock::now();
+            auto durationT = duration_cast<milliseconds>(endT - startT);
             vector<pair<float,string>> toPrint;
             if (value < magAvg)
             {
@@ -1144,8 +1141,8 @@ int main()
                 {
                     cout << toPrint[a].second << ": " << toPrint[a].first << endl;
                 }
-                cout << "Time taken to sort results using Quick Sort (in milliseconds) " << durationQ.count() << endl;
                 cout << "Time taken to sort results using Merge Sort (in milliseconds) " << durationM.count() << endl;
+                cout << "Time taken to sort results using Tim Sort (in milliseconds) " << durationT.count() << endl;
             }
             else if(value > magAvg)
             {
@@ -1155,8 +1152,8 @@ int main()
                 {
                     cout << toPrint[a].second << ": " << toPrint[a].first << endl;
                 }
-                cout << "Time taken to sort results using Quick Sort (in milliseconds) " << durationQ.count() << endl;
                 cout << "Time taken to sort results using Merge Sort (in milliseconds) " << durationM.count() << endl;
+                cout << "Time taken to sort results using Tim Sort (in milliseconds) " << durationT.count() << endl;
             }
             else if (value == magAvg)
             {
@@ -1165,14 +1162,14 @@ int main()
         }
         else if (nutrient == "iron")
         {
-            auto startQ = high_resolution_clock::now();
-            quickSort(table[21], 0, table[21].size() - 1);
-            auto endQ = high_resolution_clock::now();
-            auto durationQ = duration_cast<milliseconds>(endQ - startQ);
             auto startM = high_resolution_clock::now();
             mergeSort(table[21], 0, table[21].size() - 1);
             auto endM = high_resolution_clock::now();
             auto durationM = duration_cast<milliseconds>(endM - startM);
+            auto startT = high_resolution_clock::now();
+            timSort(table[21], table[21].size() - 1);
+            auto endT = high_resolution_clock::now();
+            auto durationT = duration_cast<milliseconds>(endT - startT);
             vector<pair<float,string>> toPrint;
             if (value < ironAvg)
             {
@@ -1182,8 +1179,8 @@ int main()
                 {
                     cout << toPrint[a].second << ": " << toPrint[a].first << endl;
                 }
-                cout << "Time taken to sort results using Quick Sort (in milliseconds) " << durationQ.count() << endl;
                 cout << "Time taken to sort results using Merge Sort (in milliseconds) " << durationM.count() << endl;
+                cout << "Time taken to sort results using Tim Sort (in milliseconds) " << durationT.count() << endl;
             }
             else if(value > ironAvg)
             {
@@ -1193,8 +1190,8 @@ int main()
                 {
                     cout << toPrint[a].second << ": " << toPrint[a].first << endl;
                 }
-                cout << "Time taken to sort results using Quick Sort (in milliseconds) " << durationQ.count() << endl;
                 cout << "Time taken to sort results using Merge Sort (in milliseconds) " << durationM.count() << endl;
+                cout << "Time taken to sort results using Tim Sort (in milliseconds) " << durationT.count() << endl;
             }
             else if (value == ironAvg)
             {
@@ -1203,14 +1200,14 @@ int main()
         }
         else if (nutrient == "zinc")
         {
-            auto startQ = high_resolution_clock::now();
-            quickSort(table[22], 0, table[22].size() - 1);
-            auto endQ = high_resolution_clock::now();
-            auto durationQ = duration_cast<milliseconds>(endQ - startQ);
             auto startM = high_resolution_clock::now();
             mergeSort(table[22], 0, table[22].size() - 1);
             auto endM = high_resolution_clock::now();
             auto durationM = duration_cast<milliseconds>(endM - startM);
+            auto startT = high_resolution_clock::now();
+            timSort(table[22], table[22].size() - 1);
+            auto endT = high_resolution_clock::now();
+            auto durationT = duration_cast<milliseconds>(endT - startT);
             vector<pair<float,string>> toPrint;
             if (value < zincAvg)
             {
@@ -1220,8 +1217,8 @@ int main()
                 {
                     cout << toPrint[a].second << ": " << toPrint[a].first << endl;
                 }
-                cout << "Time taken to sort results using Quick Sort (in milliseconds) " << durationQ.count() << endl;
                 cout << "Time taken to sort results using Merge Sort (in milliseconds) " << durationM.count() << endl;
+                cout << "Time taken to sort results using Tim Sort (in milliseconds) " << durationT.count() << endl;
             }
             else if(value > zincAvg)
             {
@@ -1231,8 +1228,8 @@ int main()
                 {
                     cout << toPrint[a].second << ": " << toPrint[a].first << endl;
                 }
-                cout << "Time taken to sort results using Quick Sort (in milliseconds) " << durationQ.count() << endl;
                 cout << "Time taken to sort results using Merge Sort (in milliseconds) " << durationM.count() << endl;
+                cout << "Time taken to sort results using Tim Sort (in milliseconds) " << durationT.count() << endl;
             }
             else if (value == zincAvg)
             {
@@ -1241,14 +1238,14 @@ int main()
         }
         else if (nutrient == "copper")
         {
-            auto startQ = high_resolution_clock::now();
-            quickSort(table[23], 0, table[23].size() - 1);
-            auto endQ = high_resolution_clock::now();
-            auto durationQ = duration_cast<milliseconds>(endQ - startQ);
             auto startM = high_resolution_clock::now();
             mergeSort(table[23], 0, table[23].size() - 1);
             auto endM = high_resolution_clock::now();
             auto durationM = duration_cast<milliseconds>(endM - startM);
+            auto startT = high_resolution_clock::now();
+            timSort(table[23], table[23].size() - 1);
+            auto endT = high_resolution_clock::now();
+            auto durationT = duration_cast<milliseconds>(endT - startT);
             vector<pair<float,string>> toPrint;
             if (value < copperAvg)
             {
@@ -1258,8 +1255,8 @@ int main()
                 {
                     cout << toPrint[a].second << ": " << toPrint[a].first << endl;
                 }
-                cout << "Time taken to sort results using Quick Sort (in milliseconds) " << durationQ.count() << endl;
                 cout << "Time taken to sort results using Merge Sort (in milliseconds) " << durationM.count() << endl;
+                cout << "Time taken to sort results using Tim Sort (in milliseconds) " << durationT.count() << endl;
             }
             else if(value > copperAvg)
             {
@@ -1269,8 +1266,8 @@ int main()
                 {
                     cout << toPrint[a].second << ": " << toPrint[a].first << endl;
                 }
-                cout << "Time taken to sort results using Quick Sort (in milliseconds) " << durationQ.count() << endl;
                 cout << "Time taken to sort results using Merge Sort (in milliseconds) " << durationM.count() << endl;
+                cout << "Time taken to sort results using Tim Sort (in milliseconds) " << durationT.count() << endl;
             }
             else if (value == copperAvg)
             {
@@ -1279,14 +1276,14 @@ int main()
         }
         else if (nutrient == "selenium")
         {
-            auto startQ = high_resolution_clock::now();
-            quickSort(table[24], 0, table[24].size() - 1);
-            auto endQ = high_resolution_clock::now();
-            auto durationQ = duration_cast<milliseconds>(endQ - startQ);
             auto startM = high_resolution_clock::now();
             mergeSort(table[24], 0, table[24].size() - 1);
             auto endM = high_resolution_clock::now();
             auto durationM = duration_cast<milliseconds>(endM - startM);
+            auto startT = high_resolution_clock::now();
+            timSort(table[24], table[24].size() - 1);
+            auto endT = high_resolution_clock::now();
+            auto durationT = duration_cast<milliseconds>(endT - startT);
             vector<pair<float,string>> toPrint;
             if (value < selenAvg)
             {
@@ -1296,8 +1293,8 @@ int main()
                 {
                     cout << toPrint[a].second << ": " << toPrint[a].first << endl;
                 }
-                cout << "Time taken to sort results using Quick Sort (in milliseconds) " << durationQ.count() << endl;
                 cout << "Time taken to sort results using Merge Sort (in milliseconds) " << durationM.count() << endl;
+                cout << "Time taken to sort results using Tim Sort (in milliseconds) " << durationT.count() << endl;
             }
             else if(value > selenAvg)
             {
@@ -1307,8 +1304,8 @@ int main()
                 {
                     cout << toPrint[a].second << ": " << toPrint[a].first << endl;
                 }
-                cout << "Time taken to sort results using Quick Sort (in milliseconds) " << durationQ.count() << endl;
                 cout << "Time taken to sort results using Merge Sort (in milliseconds) " << durationM.count() << endl;
+                cout << "Time taken to sort results using Tim Sort (in milliseconds) " << durationT.count() << endl;
             }
             else if (value == selenAvg)
             {
@@ -1317,14 +1314,14 @@ int main()
         }
         else if (nutrient == "potassium")
         {
-            auto startQ = high_resolution_clock::now();
-            quickSort(table[25], 0, table[25].size() - 1);
-            auto endQ = high_resolution_clock::now();
-            auto durationQ = duration_cast<milliseconds>(endQ - startQ);
             auto startM = high_resolution_clock::now();
             mergeSort(table[25], 0, table[25].size() - 1);
             auto endM = high_resolution_clock::now();
             auto durationM = duration_cast<milliseconds>(endM - startM);
+            auto startT = high_resolution_clock::now();
+            timSort(table[25], table[25].size() - 1);
+            auto endT = high_resolution_clock::now();
+            auto durationT = duration_cast<milliseconds>(endT - startT);
             vector<pair<float,string>> toPrint;
             if (value < potAvg)
             {
@@ -1334,8 +1331,8 @@ int main()
                 {
                     cout << toPrint[a].second << ": " << toPrint[a].first << endl;
                 }
-                cout << "Time taken to sort results using Quick Sort (in milliseconds) " << durationQ.count() << endl;
                 cout << "Time taken to sort results using Merge Sort (in milliseconds) " << durationM.count() << endl;
+                cout << "Time taken to sort results using Tim Sort (in milliseconds) " << durationT.count() << endl;
             }
             else if(value > potAvg)
             {
@@ -1345,8 +1342,8 @@ int main()
                 {
                     cout << toPrint[a].second << ": " << toPrint[a].first << endl;
                 }
-                cout << "Time taken to sort results using Quick Sort (in milliseconds) " << durationQ.count() << endl;
                 cout << "Time taken to sort results using Merge Sort (in milliseconds) " << durationM.count() << endl;
+                cout << "Time taken to sort results using Tim Sort (in milliseconds) " << durationT.count() << endl;
             }
             else if (value == potAvg)
             {
@@ -1355,14 +1352,14 @@ int main()
         }
         else if (nutrient == "sodium")
         {
-            auto startQ = high_resolution_clock::now();
-            quickSort(table[26], 0, table[26].size() - 1);
-            auto endQ = high_resolution_clock::now();
-            auto durationQ = duration_cast<milliseconds>(endQ - startQ);
             auto startM = high_resolution_clock::now();
             mergeSort(table[26], 0, table[26].size() - 1);
             auto endM = high_resolution_clock::now();
             auto durationM = duration_cast<milliseconds>(endM - startM);
+            auto startT = high_resolution_clock::now();
+            timSort(table[26], table[26].size() - 1);
+            auto endT = high_resolution_clock::now();
+            auto durationT = duration_cast<milliseconds>(endT - startT);
             vector<pair<float,string>> toPrint;
             if (value < sodiumAvg)
             {
@@ -1372,8 +1369,8 @@ int main()
                 {
                     cout << toPrint[a].second << ": " << toPrint[a].first << endl;
                 }
-                cout << "Time taken to sort results using Quick Sort (in milliseconds) " << durationQ.count() << endl;
                 cout << "Time taken to sort results using Merge Sort (in milliseconds) " << durationM.count() << endl;
+                cout << "Time taken to sort results using Tim Sort (in milliseconds) " << durationT.count() << endl;
             }
             else if(value > sodiumAvg)
             {
@@ -1383,8 +1380,8 @@ int main()
                 {
                     cout << toPrint[a].second << ": " << toPrint[a].first << endl;
                 }
-                cout << "Time taken to sort results using Quick Sort (in milliseconds) " << durationQ.count() << endl;
                 cout << "Time taken to sort results using Merge Sort (in milliseconds) " << durationM.count() << endl;
+                cout << "Time taken to sort results using Tim Sort (in milliseconds) " << durationT.count() << endl;
             }
             else if (value == sodiumAvg)
             {
